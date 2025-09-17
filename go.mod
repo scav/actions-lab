@@ -1,6 +1,6 @@
 module github.com/scav/actions-lab
 
-go 1.22.4
+go 1.25.0
 
 require github.com/stretchr/testify v1.10.0
 
