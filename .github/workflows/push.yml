@@ -1,0 +1,33 @@
+name: Push
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+    branches:
+      - main
+
+jobs:
+  tw:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install TailwindCSS CLI
+        run: |
+          curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-$RUNNER_OS-$RUNNER_ARCH
+          chmod +x tailwindcss-$RUNNER_OS-$RUNNER_ARCH
+          mkdir $HOME/.bin
+          mv tailwindcss-$RUNNER_OS-$RUNNER_ARCH $HOME/.bin/tailwindcss
+          echo "$HOME/.bin" >> $GITHUB_PATH
+      - name: Test
+        run: tailwindcss -h
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create file
+        run: echo ${{ github.event.number }} > ./pr.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr-${{ github.event.pull_request.number }}
+          path: ./pr.txt

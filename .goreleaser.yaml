@@ -1,0 +1,63 @@
+version: 2
+project_name: action-lab
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: action-lab
+    env:
+      - CGO_ENABLED=0
+    binary: action-lab
+    goos:
+      - linux
+    goarch:
+      - arm64
+      - amd64
+    main: ./cmd/generator/
+
+archives:
+  - id: action-lab
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+
+release:
+  include_meta: true
+  prerelease: auto
+  draft: false
+  header: |
+    ## Getting started
+    Asdf asdf asdf adf
+    ```
+
+  footer: |
+    **Details**: https://github.com/scav/actions-lab/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+changelog:
+  use: github
+  sort: asc
+  abbrev: 0
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Bugs'
+      regexp: '^.*?bug(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: 'Chores'
+      regexp: '^.*?chore(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: Others
+      order: 999

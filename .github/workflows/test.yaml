@@ -1,0 +1,54 @@
+name: Kaniko
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: kind
+    # container: localhost:5001/default-runner:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+      - name: Run tests
+        run: go test -race -vet all -v ./...
+        env:
+          CGO_ENABLED: 1
+      - name: Ko Install
+        run: go install github.com/google/ko@latest
+      - name: Ko Build
+        run: ko build ./cmd/
+        env:
+          KO_DOCKER_REPO: localhost:5001/ko-build
+        continue-on-error: true
+      - name: Dockerbuild
+        run: docker build -t localhost:5001/docker-build .
+        continue-on-error: true
+  build:
+    runs-on: kind
+    container:
+      image: gcr.io/kaniko-project/executor:debug
+    permissions:
+      contents: read # read the repository
+      packages: write
+    steps:
+      - name: Kaniko build
+        run: |
+         # Write config file, change to your destination registry
+          AUTH=$(echo -n ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} | base64)
+          echo "{\"auths\": {\"ghcr.io\": {\"auth\": \"${AUTH}\"}}}" > /kaniko/.docker/config.json
+
+          # Configure git
+          export GIT_USERNAME="kaniko-bot"
+          export GIT_PASSWORD="${{ secrets.GITHUB_TOKEN }}" # works for GHEC or GHES container registry
+
+          /kaniko/executor --dockerfile="./Dockerfile" \
+          --context="${{ github.repositoryUrl }}#${{ github.ref }}#${{ github.sha }}" \
+          --destination="ghcr.io/scav/actions-lab/kaniko:latest" \
+          --push-retry 1 \
+          --image-name-with-digest-file /workspace/image-digest.txt
