@@ -3,7 +3,6 @@ package main
 import (
 	"testing"
 
-	"github.com/kortschak/utter"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,5 +22,5 @@ func Test_Me(t *testing.T) {
 		require.NotEqual(t, 4, result)
 	})
 
-	utter.Dump("TEST DUMP")
+	println("test dump")
 }
